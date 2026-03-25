@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freeway – Decision Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0e0e14;--ink2:#1a1a24;--ink3:#252535;--ink4:#2e2e42;
+  --fog:rgba(255,255,255,0.06);--fog2:rgba(255,255,255,0.10);--fog3:rgba(255,255,255,0.16);
+  --text:#f0eff8;--dim:#8887a8;--dimmer:#55546e;
+  --lime:#b8f552;--lime2:#d4ff70;--teal:#2ef8c3;--teal2:#7fffd4;
+  --coral:#ff6b6b;--gold:#ffd166;--purple:#a78bfa;--blue:#60a5fa;
+  --r:14px;--r-sm:9px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:58px;background:rgba(14,14,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--fog2)}
+.logo{font-family:'Instrument Serif',serif;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text)}
+.logo-dot{width:9px;height:9px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-center{display:flex;gap:2px}
+.nav-tab{padding:6px 14px;border-radius:50px;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;border:none;background:none;color:var(--dim);font-family:'Outfit',sans-serif}
+.nav-tab:hover{color:var(--text);background:var(--fog)}
+.nav-tab.act{color:var(--text);background:var(--fog2)}
+.nav-right{display:flex;gap:8px;align-items:center}
+.npill{padding:6px 14px;border-radius:50px;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--fog2);background:none;color:var(--dim);font-family:'Outfit',sans-serif}
+.npill:hover{color:var(--text);background:var(--fog)}
+.npill.cta{background:var(--lime);color:var(--ink);border-color:var(--lime);font-weight:700}
+.npill.cta:hover{background:var(--lime2)}
+.nav-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--lime),var(--teal));display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;color:var(--ink);cursor:pointer}
+
+/* PAGES - all hidden, auth shown via inline style */
+.pg{display:none;padding-top:58px;min-height:100vh}
+.pg.on{display:block;animation:fu .3s ease both}
+.pgf{display:none;min-height:100vh;align-items:center;justify-content:center}
+.pgf.on{display:flex;animation:fu .3s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* SHARED */
+.wrap{max-width:1000px;margin:0 auto;padding:40px 24px 80px}
+.wrap-sm{max-width:680px;margin:0 auto;padding:40px 24px 80px}
+.scen-wrap{max-width:780px;margin:0 auto;padding:40px 24px 80px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:50px;font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;white-space:nowrap}
+.bl{background:var(--lime);color:var(--ink);box-shadow:0 4px 20px rgba(184,245,82,.25)}
+.bl:hover{background:var(--lime2);transform:translateY(-1px)}
+.bg{background:var(--fog);color:var(--text);border:1px solid var(--fog2)}
+.bg:hover{background:var(--fog2)}
+.bd{background:rgba(255,107,107,.1);color:var(--coral);border:1px solid rgba(255,107,107,.2)}
+.bd:hover{background:rgba(255,107,107,.2)}
+.bsm{padding:7px 16px;font-size:.8rem}
+.bxs{padding:5px 12px;font-size:.75rem}
+.bfw{width:100%;justify-content:center}
+
+.card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:24px}
+input[type=text],input[type=email],input[type=password],input[type=number],textarea,select{width:100%;background:var(--ink3);border:1px solid var(--fog2);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s;resize:none;-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--lime)}
+input::placeholder,textarea::placeholder{color:var(--dimmer)}
+select option{background:var(--ink3)}
+.fl{display:block;font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.fld{margin-bottom:16px}
+
+.prog-track{height:6px;background:var(--ink3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:50px;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.b-lime{background:rgba(184,245,82,.12);color:var(--lime)}
+.b-teal{background:rgba(46,248,195,.12);color:var(--teal)}
+.b-coral{background:rgba(255,107,107,.12);color:var(--coral)}
+.b-gold{background:rgba(255,209,102,.12);color:var(--gold)}
+.b-purple{background:rgba(167,139,250,.12);color:var(--purple)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--dim)}
+.empty-icon{font-size:2.2rem;margin-bottom:12px}
+.empty h3{color:var(--text);font-size:.95rem;margin-bottom:7px}
+.empty p{font-size:.82rem;margin-bottom:18px}
+
+/* AUTH */
+.auth-shell{width:100%;min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:768px){.auth-shell{grid-template-columns:1fr}}
+.auth-L{background:linear-gradient(160deg,#0e0e14,#131320 60%,#0d1a14);padding:56px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--fog2);position:relative;overflow:hidden}
+.auth-L::before{content:'◈';position:absolute;bottom:-40px;right:-20px;font-size:14rem;color:rgba(46,248,195,.03);pointer-events:none;line-height:1}
+.auth-L-logo{font-family:'Instrument Serif',serif;font-size:1.4rem;display:flex;align-items:center;gap:9px}
+.auth-L-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+.auth-L-body h2{font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.08;letter-spacing:-.02em;margin-bottom:16px}
+.auth-L-body h2 em{font-style:italic;background:linear-gradient(120deg,var(--lime),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-L-body p{color:var(--dim);font-size:.9rem;line-height:1.75;max-width:320px;font-weight:300}
+.auth-L-foot{background:var(--fog);border:1px solid var(--fog2);border-radius:var(--r);padding:18px 22px;font-size:.82rem;color:var(--dim);line-height:1.65;max-width:360px}
+.auth-L-foot strong{color:var(--text);display:block;margin-bottom:5px;font-size:.78rem}
+.auth-R{background:var(--ink);display:flex;align-items:center;justify-content:center;padding:56px 44px}
+@media(max-width:768px){.auth-L{display:none}.auth-R{padding:76px 22px 36px}}
+.auth-box{width:100%;max-width:370px}
+.auth-tabs{display:flex;margin-bottom:32px;background:var(--ink2);border-radius:50px;padding:4px;border:1px solid var(--fog2)}
+.at{flex:1;padding:8px;border-radius:50px;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;background:none;border:none;color:var(--dim);font-family:'Outfit',sans-serif}
+.at.act{background:var(--ink3);color:var(--text)}
+.auth-title{font-family:'Instrument Serif',serif;font-size:1.7rem;margin-bottom:5px}
+.auth-sub{color:var(--dim);font-size:.83rem;margin-bottom:24px;line-height:1.5}
+.auth-btn{width:100%;padding:13px;border-radius:50px;background:var(--lime);color:var(--ink);font-family:'Outfit',sans-serif;font-size:.93rem;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(184,245,82,.25);transition:all .2s;margin-top:6px}
+.auth-btn:hover{background:var(--lime2);transform:translateY(-1px)}
+.auth-div{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--dimmer);font-size:.75rem}
+.auth-div::before,.auth-div::after{content:'';flex:1;height:1px;background:var(--fog2)}
+.auth-demo{width:100%;padding:11px;border-radius:50px;background:var(--fog);color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:500;border:1px solid var(--fog2);cursor:pointer;transition:all .2s}
+.auth-demo:hover{background:var(--fog2)}
+.amsg{border-radius:var(--r-sm);padding:9px 13px;font-size:.8rem;margin-bottom:14px;display:none}
+.amsg.on{display:block}
+.amsg.err{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);color:var(--coral)}
+.amsg.ok{background:rgba(46,248,195,.08);border:1px solid rgba(46,248,195,.2);color:var(--teal)}
+
+/* ONBOARDING */
+.ob-shell{width:100%;max-width:520px;padding:28px 24px}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin-bottom:28px}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--fog2);transition:all .3s}
+.ob-dot.act{background:var(--lime);width:22px;border-radius:4px}
+.ob-dot.done{background:var(--teal)}
+.ob-card{text-align:center}
+.ob-icon{font-size:3rem;margin-bottom:18px}
+.ob-card h2{font-family:'Instrument Serif',serif;font-size:1.8rem;margin-bottom:12px}
+.ob-card p{color:var(--dim);line-height:1.75;font-size:.9rem;max-width:380px;margin:0 auto 24px}
+.ob-feats{display:flex;flex-direction:column;gap:9px;margin-bottom:24px;text-align:left}
+.ob-feat{display:flex;align-items:center;gap:11px;background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r-sm);padding:11px 15px;font-size:.84rem}
+.ob-feat-i{font-size:1.1rem}
+
+/* DASHBOARD */
+.dash-greeting{font-family:'Instrument Serif',serif;font-size:1.8rem;margin-bottom:4px}
+.nw-banner{border-radius:var(--r);padding:26px 30px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;position:relative;overflow:hidden}
+.nw-pos{background:linear-gradient(135deg,rgba(184,245,82,.07),rgba(46,248,195,.04));border:1px solid rgba(184,245,82,.18)}
+.nw-neg{background:linear-gradient(135deg,rgba(255,107,107,.07),rgba(255,107,107,.03));border:1px solid rgba(255,107,107,.18)}
+.nw-zero{background:var(--ink2);border:1px solid var(--fog2)}
+.nw-lbl{font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.nw-num{font-family:'Instrument Serif',serif;font-size:2.4rem;line-height:1;letter-spacing:-.02em}
+.nw-hint{font-size:.78rem;color:var(--dim);margin-top:5px}
+.nw-stats{display:flex;gap:20px;flex-wrap:wrap}
+.nws .sv{font-family:'Instrument Serif',serif;font-size:1.2rem;line-height:1}
+.nws .sl{font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;margin-bottom:22px}
+.stat-card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:16px 18px}
+.s-lbl{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.s-val{font-family:'Instrument Serif',serif;font-size:1.5rem;line-height:1;margin-bottom:3px}
+.s-sub{font-size:.7rem;color:var(--dim)}
+.t2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+@media(max-width:660px){.t2{grid-template-columns:1fr}}
+.ring-bg{fill:none;stroke:var(--ink3);stroke-width:7}
+.ring-arc{fill:none;stroke-width:7;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)}
+.g-item{background:var(--ink3);border-radius:var(--r-sm);padding:11px 13px;margin-bottom:9px}
+.g-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.g-name{font-size:.83rem;font-weight:600}
+.g-pct{font-size:.76rem;font-weight:700}
+.g-amts{display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--dim)}
+.rd-item{display:flex;align-items:center;gap:11px;padding:9px 13px;background:var(--ink3);border-radius:var(--r-sm);cursor:pointer;transition:background .2s;margin-bottom:8px}
+.rd-item:hover{background:var(--ink4)}
+.rd-title{font-size:.83rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-w{font-size:.7rem;font-weight:700;color:var(--teal);white-space:nowrap}
+.rd-s{font-size:.73rem;color:var(--lime);font-weight:700;white-space:nowrap}
+
+/* SCENARIO */
+.sp-tabs{display:flex;border:1px solid var(--fog2);border-radius:50px;overflow:hidden;background:var(--ink2);margin-bottom:28px}
+.sp-btn{flex:1;padding:10px 8px;background:none;border:none;font-family:'Outfit',sans-serif;font-size:.79rem;font-weight:600;color:var(--dim);cursor:pointer;transition:all .2s;text-align:center}
+.sp-btn.act{background:var(--ink3);color:var(--text)}
+.sp-btn.done{color:var(--teal)}
+.sp-num{width:19px;height:19px;border-radius:50%;background:var(--fog2);display:inline-flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:800;margin-right:4px}
+.sp-btn.act .sp-num{background:var(--lime);color:var(--ink)}
+.sp-btn.done .sp-num{background:var(--teal);color:var(--ink)}
+.opt-row{display:flex;align-items:center;gap:9px;background:var(--ink3);border:1px solid var(--fog2);border-radius:var(--r-sm);padding:9px 13px}
+.opt-ltr{font-family:'Instrument Serif',serif;font-size:.93rem;color:var(--lime);min-width:17px}
+.opt-row input{background:none;border:none;padding:0;flex:1;font-size:.87rem;color:var(--text);font-family:'Outfit',sans-serif}
+.opt-row input:focus{outline:none}
+.rm-btn{background:none;border:none;color:var(--dimmer);cursor:pointer;font-size:.88rem;padding:2px;transition:color .2s}
+.rm-btn:hover{color:var(--coral)}
+.add-opt{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--fog2);border-radius:var(--r-sm);padding:9px 13px;color:var(--dim);font-family:'Outfit',sans-serif;font-size:.82rem;cursor:pointer;width:100%;transition:all .2s}
+.add-opt:hover{border-color:var(--fog3);color:var(--text)}
+.ai-note{display:flex;align-items:flex-start;gap:8px;background:rgba(184,245,82,.05);border:1px solid rgba(184,245,82,.12);border-radius:var(--r-sm);padding:11px 13px;margin-top:14px;font-size:.79rem;color:var(--dim);line-height:1.55}
+.ai-loader{text-align:center;padding:50px 20px}
+.ai-ring{width:56px;height:56px;border:3px solid var(--fog2);border-top-color:var(--lime);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.win-banner{background:linear-gradient(135deg,rgba(184,245,82,.07),rgba(46,248,195,.04));border:1px solid rgba(184,245,82,.22);border-radius:var(--r);padding:24px 26px;margin-bottom:18px;position:relative;overflow:hidden}
+.win-banner::after{content:'★';position:absolute;right:18px;top:8px;font-size:4.5rem;color:rgba(184,245,82,.05);pointer-events:none;line-height:1}
+.win-ey{font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--lime);margin-bottom:6px}
+.win-name{font-family:'Instrument Serif',serif;font-size:1.7rem;margin-bottom:9px;line-height:1.1}
+.win-reason{color:var(--dim);font-size:.83rem;line-height:1.7;margin-bottom:14px;max-width:520px}
+.win-chips{display:flex;gap:9px;flex-wrap:wrap}
+.wc{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:50px;font-size:.79rem;font-weight:600}
+.wc-w{background:rgba(255,255,255,.07)}
+.wc-f{background:rgba(46,248,195,.12);color:var(--teal)}
+.wc-fin{background:rgba(184,245,82,.12);color:var(--lime)}
+.proj-box{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:20px 24px;margin-bottom:18px}
+.proj-title{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px}
+.proj-item{background:var(--ink3);border-radius:var(--r-sm);padding:13px 15px}
+.proj-opt{font-size:.7rem;font-weight:700;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.proj-val{font-family:'Instrument Serif',serif;font-size:1.3rem;line-height:1;margin-bottom:3px}
+.proj-pos{color:var(--lime)}
+.proj-neg{color:var(--coral)}
+.proj-desc{font-size:.7rem;color:var(--dim);line-height:1.4}
+.res-card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);overflow:hidden;margin-bottom:11px}
+.res-card.win{border-color:rgba(184,245,82,.25)}
+.res-head{display:flex;align-items:center;gap:11px;padding:15px 19px;border-bottom:1px solid var(--fog);flex-wrap:wrap}
+.res-rank{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--dimmer);min-width:20px}
+.res-rank.r1{color:var(--lime)}
+.res-name{font-weight:700;flex:1;min-width:100px;font-size:.93rem}
+.res-scores{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+.rs{text-align:center;min-width:48px}
+.rs .rv{font-family:'Instrument Serif',serif;font-size:1.15rem}
+.rs .rl{font-size:.57rem;color:var(--dim);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+.rs-f .rv{color:var(--teal)}
+.rs-fin .rv{color:var(--lime)}
+.res-body{padding:15px 19px}
+.f-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.f-row:last-child{margin-bottom:0}
+.f-nm{min-width:125px;font-size:.74rem;color:var(--dim);display:flex;align-items:center;gap:4px;flex-shrink:0}
+.f-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0}
+.f-track{flex:1;height:4px;background:var(--ink3);border-radius:2px;overflow:hidden}
+.f-fill{height:100%;border-radius:2px;width:0%;transition:width 1s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,rgba(255,255,255,.2),rgba(255,255,255,.42))}
+.f-fill.ff{background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.f-num{font-size:.74rem;font-weight:700;min-width:19px;text-align:right}
+.f-wt{font-size:.61rem;padding:1px 5px;border-radius:4px;background:var(--fog);color:var(--dim);min-width:32px;text-align:center}
+.ins-txt{margin-top:11px;padding-top:11px;border-top:1px solid var(--fog);font-size:.78rem;color:var(--dim);line-height:1.6}
+.feq{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:.84rem}
+.fb{background:var(--ink3);border:1px solid var(--fog2);border-radius:8px;padding:7px 13px;text-align:center;min-width:86px}
+.fb .fn{font-family:'Instrument Serif',serif;font-size:1.15rem;line-height:1}
+.fb .fll{font-size:.59rem;color:var(--dim);margin-top:2px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.fb.lime .fn{color:var(--lime)}.fb.teal .fn{color:var(--teal)}.fb.gold .fn{color:var(--gold)}
+.fop{color:var(--dimmer)}
+
+/* PROFILE */
+.prof-av{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--lime),var(--teal));display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:1.5rem;color:var(--ink);flex-shrink:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:580px){.g2{grid-template-columns:1fr}}
+.fin-row{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.fin-row label{font-size:.77rem;color:var(--dim);min-width:130px;flex-shrink:0}
+.fin-wrap{flex:1;display:flex;align-items:center;gap:4px;background:var(--ink3);border:1px solid var(--fog2);border-radius:var(--r-sm);padding:0 10px;transition:border-color .2s}
+.fin-wrap:focus-within{border-color:var(--lime)}
+.fin-pfx{font-size:.81rem;color:var(--dimmer);flex-shrink:0}
+.fin-in{background:none;border:none;padding:9px 3px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.87rem;font-weight:600;width:100%;outline:none;text-align:right;-moz-appearance:textfield;appearance:textfield}
+.fin-in::-webkit-inner-spin-button{-webkit-appearance:none}
+.fin-in::placeholder{color:var(--dimmer);font-weight:400}
+.fsec{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:20px;margin-bottom:12px}
+.fsec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.fsec-title{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:6px}
+.fsec-total{font-family:'Instrument Serif',serif;font-size:1.15rem}
+
+/* EXTRAS */
+.ex-tabs{display:flex;gap:5px;margin-bottom:24px;border-bottom:1px solid var(--fog2);padding-bottom:14px}
+.ex-tab{padding:6px 16px;border-radius:50px;font-size:.81rem;font-weight:600;cursor:pointer;transition:all .2s;border:none;background:none;color:var(--dim);font-family:'Outfit',sans-serif}
+.ex-tab.act{background:var(--ink3);color:var(--text)}
+.goal-card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:18px 20px;margin-bottom:11px}
+.goal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:9px}
+.goal-amts{display:flex;justify-content:space-between;margin-top:9px;font-size:.78rem;color:var(--dim)}
+.debt-card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:18px 20px;margin-bottom:11px}
+.ms-card{display:flex;align-items:center;gap:13px;background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:14px 18px;margin-bottom:9px}
+.ms-icon{font-size:1.4rem;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--ink3);border-radius:50%;flex-shrink:0}
+.ms-body{flex:1}
+.ms-title{font-weight:600;font-size:.88rem;margin-bottom:2px}
+.ms-desc{font-size:.73rem;color:var(--dim)}
+.ms-chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--fog3);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s;font-size:.7rem}
+.ms-chk.done{background:var(--teal);border-color:var(--teal);color:var(--ink)}
+
+/* COMMUNITY */
+.cf-card{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:18px 20px;margin-bottom:11px;transition:border-color .2s}
+.cf-card:hover{border-color:var(--fog3)}
+.cf-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.cf-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.73rem;font-weight:800;color:var(--ink);flex-shrink:0}
+.cf-name{font-weight:600;font-size:.86rem}
+.cf-time{font-size:.7rem;color:var(--dimmer);margin-left:auto}
+.cf-body{font-size:.83rem;color:var(--dim);line-height:1.65;margin-bottom:11px}
+.cf-body strong{color:var(--text)}
+.cf-like{background:none;border:1px solid var(--fog2);border-radius:50px;padding:4px 11px;font-size:.73rem;color:var(--dim);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.cf-like:hover,.cf-like.liked{background:rgba(184,245,82,.1);border-color:rgba(184,245,82,.25);color:var(--lime)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(10,10,16,.82);backdrop-filter:blur(8px);z-index:800;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.on{display:flex}
+.modal-box{background:var(--ink2);border:1px solid var(--fog2);border-radius:var(--r);padding:26px;width:100%;max-width:440px;max-height:80vh;overflow-y:auto;animation:fu .25s ease both}
+.modal-title{font-family:'Instrument Serif',serif;font-size:1.35rem;margin-bottom:5px}
+.modal-sub{color:var(--dim);font-size:.82rem;margin-bottom:20px}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;z-index:9000;background:var(--ink3);border:1px solid var(--fog3);padding:10px 16px;border-radius:var(--r-sm);font-size:.82rem;opacity:0;transform:translateY(6px);transition:all .25s;pointer-events:none;max-width:260px}
+.toast.on{opacity:1;transform:none}
+
+@media(max-width:640px){
+  nav{padding:0 14px}
+  .nav-center{display:none}
+  .wrap,.wrap-sm,.scen-wrap{padding-left:14px;padding-right:14px}
+  .nw-banner{flex-direction:column;align-items:flex-start}
+  .res-scores{margin-left:0}
+  .feq{flex-direction:column;align-items:flex-start}
+  .fin-row{flex-direction:column;align-items:flex-start}
+  .fin-row label{min-width:unset}
+  .fin-wrap{width:100%}
+}
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <div class="logo" onclick="goPage('dashboard')"><div class="logo-dot"></div>freeway</div>
+  <div class="nav-center" id="nav-center"></div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modal-bg" onclick="closeMod(event)"><div class="modal-box" id="modal-box"></div></div>
+
+<!-- AUTH: visible by default via inline style; JS hides it if logged in -->
+<div id="page-auth" style="display:flex;width:100%;min-height:100vh;align-items:center;justify-content:center;">
+  <div class="auth-shell">
+    <div class="auth-L">
+      <div class="auth-L-logo"><div class="logo-dot"></div>freeway</div>
+      <div class="auth-L-body">
+        <h2>Make decisions that keep you <em>free.</em></h2>
+        <p>The AI-powered decision lab for students and young adults — with a full financial dashboard, goal tracking, and a Freedom Score for every choice.</p>
+      </div>
+      <div class="auth-L-foot"><strong>◈ Signature Feature: Freedom Score™</strong>Every analysis includes a Freedom Score measuring how much each choice keeps your future open.</div>
+    </div>
+    <div class="auth-R">
+      <div class="auth-box">
+        <div class="auth-tabs">
+          <button class="at act" id="tab-li" onclick="switchTab('li')">Sign In</button>
+          <button class="at" id="tab-su" onclick="switchTab('su')">Sign Up</button>
+        </div>
+        <div class="amsg err" id="auth-err"></div>
+        <div class="amsg ok"  id="auth-ok"></div>
+        <div id="form-li">
+          <div class="auth-title">Welcome back</div>
+          <div class="auth-sub">Sign in to continue.</div>
+          <div class="fld"><label class="fl">Email</label><input type="email" id="li-email" placeholder="you@example.com"/></div>
+          <div class="fld"><label class="fl">Password</label><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+          <button class="auth-btn" onclick="doLogin()">Sign In →</button>
+          <div class="auth-div">or</div>
+          <button class="auth-demo" onclick="doDemo()">Continue with Demo Account</button>
+        </div>
+        <div id="form-su" style="display:none">
+          <div class="auth-title">Create account</div>
+          <div class="auth-sub">Start making better decisions today.</div>
+          <div class="fld"><label class="fl">Full Name</label><input type="text" id="su-name" placeholder="Your name"/></div>
+          <div class="fld"><label class="fl">Email</label><input type="email" id="su-email" placeholder="you@example.com"/></div>
+          <div class="fld"><label class="fl">Password</label><input type="password" id="su-pass" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter')doSignup()"/></div>
+          <button class="auth-btn" onclick="doSignup()">Create Account →</button>
+          <div class="auth-div">or</div>
+          <button class="auth-demo" onclick="doDemo()">Continue with Demo Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME -->
+<div id="page-welcome" class="pgf"><div class="ob-shell"><div class="ob-dots" id="ob-dots"></div><div id="ob-content"></div></div></div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="pg">
+  <div class="wrap">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:24px;flex-wrap:wrap">
+      <div><div class="dash-greeting" id="dash-greet">Hello</div><div style="color:var(--dim);font-size:.84rem" id="dash-date"></div></div>
+      <button class="btn bl bsm" onclick="goPage('scenario')">+ New Scenario</button>
+    </div>
+    <div class="nw-banner nw-zero" id="nw-banner">
+      <div><div class="nw-lbl">Net Worth</div><div class="nw-num" id="nw-num" style="color:var(--dim)">—</div><div class="nw-hint" id="nw-hint">Set up finances in Profile →</div></div>
+      <div class="nw-stats" id="nw-stats"></div>
+    </div>
+    <div class="stat-grid" id="dash-stats"></div>
+    <div class="t2">
+      <div class="card">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:13px">◈ Financial Freedom Score</div>
+        <div style="display:flex;align-items:center;gap:18px">
+          <div style="flex-shrink:0">
+            <svg width="76" height="76" viewBox="0 0 76 76">
+              <circle class="ring-bg" cx="38" cy="38" r="30"/>
+              <circle class="ring-arc" id="ffs-arc" cx="38" cy="38" r="30" stroke="url(#rg)" stroke-dasharray="188" stroke-dashoffset="188"/>
+              <defs><linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2ef8c3"/><stop offset="100%" stop-color="#b8f552"/></linearGradient></defs>
+              <text style="font-family:'Instrument Serif',serif;font-size:13px;fill:var(--text)" x="38" y="42" text-anchor="middle" id="ffs-num">—</text>
+            </svg>
+          </div>
+          <div><div style="font-size:.67rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:3px">Your Score</div><div style="font-weight:700;font-size:.92rem;margin-bottom:4px" id="ffs-title">Not set up</div><div style="font-size:.76rem;color:var(--dim);line-height:1.6" id="ffs-desc">Add financial data in Profile.</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px">
+          <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Goals Progress</div>
+          <button class="btn bg bxs" onclick="goPage('extras')">View All</button>
+        </div>
+        <div id="dash-goals"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px">
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Recent Decisions</div>
+        <button class="btn bg bxs" onclick="goPage('scenario')">+ New</button>
+      </div>
+      <div id="dash-decisions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENARIO -->
+<div id="page-scenario" class="pg">
+  <div class="scen-wrap">
+    <div class="sp-tabs" id="sp-tabs">
+      <button class="sp-btn act" id="spb0" onclick="goPhase(0)"><span class="sp-num">1</span>Decision</button>
+      <button class="sp-btn" id="spb1" onclick="goPhase(1)"><span class="sp-num">2</span>Options</button>
+      <button class="sp-btn" id="spb2" onclick="goPhase(2)"><span class="sp-num">3</span>Results</button>
+    </div>
+    <div id="sp-content"></div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="page-profile" class="pg">
+  <div class="wrap-sm">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:28px;flex-wrap:wrap">
+      <div class="prof-av" id="prof-av">?</div>
+      <div><div style="font-family:'Instrument Serif',serif;font-size:1.45rem" id="prof-name-disp">Your Name</div><div style="color:var(--dim);font-size:.83rem;margin-top:2px" id="prof-email-disp"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:16px">Personal Info</div>
+      <div class="g2">
+        <div class="fld"><label class="fl">Full Name</label><input type="text" id="pf-name" oninput="schedProfSave()"/></div>
+        <div class="fld"><label class="fl">Age</label><input type="number" id="pf-age" placeholder="e.g. 24" oninput="schedProfSave()"/></div>
+        <div class="fld"><label class="fl">Life Stage</label><select id="pf-stage" onchange="schedProfSave()"><option value="">Select…</option><option value="student">Student</option><option value="new-grad">Recent Graduate</option><option value="early">Early Career</option><option value="mid">Mid Career</option><option value="entrepreneur">Entrepreneur</option></select></div>
+        <div class="fld"><label class="fl">Primary Goal</label><select id="pf-goal" onchange="schedProfSave()"><option value="">Select…</option><option value="debt-free">Become Debt-Free</option><option value="emergency">Build Emergency Fund</option><option value="invest">Start Investing</option><option value="house">Buy a Home</option><option value="freedom">Financial Freedom</option></select></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div><div style="font-weight:700;font-size:.93rem">Financial Data</div><div style="font-size:.77rem;color:var(--dim);margin-top:2px">Used by AI Scenario Tool &amp; Freedom Score</div></div>
+      <button class="btn bl bsm" onclick="saveFin()">Save Finances</button>
+    </div>
+    <div class="fsec"><div class="fsec-head"><div class="fsec-title">💵 Cash &amp; Assets</div><div class="fsec-total" style="color:var(--teal)" id="fst-assets">$0</div></div><div id="fin-assets"></div></div>
+    <div class="fsec"><div class="fsec-head"><div class="fsec-title">💳 Debts</div><div class="fsec-total" style="color:var(--coral)" id="fst-debts">$0</div></div><div id="fin-debts"></div></div>
+    <div class="fsec"><div class="fsec-head"><div class="fsec-title">📅 Monthly Cash Flow</div><div class="fsec-total" id="fst-cf">$0/mo</div></div><div id="fin-monthly"></div></div>
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn bl" onclick="saveFin()">Save All Changes</button>
+      <button class="btn bd bsm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTRAS -->
+<div id="page-extras" class="pg">
+  <div class="wrap">
+    <div style="margin-bottom:22px"><div style="font-family:'Instrument Serif',serif;font-size:1.6rem;margin-bottom:4px">Goals &amp; Extras</div><div style="color:var(--dim);font-size:.87rem">Track savings goals, debt payoff, and financial milestones.</div></div>
+    <div class="ex-tabs" id="ex-tabs">
+      <button class="ex-tab act" onclick="swExtras('goals',this)">🎯 Goals</button>
+      <button class="ex-tab" onclick="swExtras('debt',this)">💳 Debt Tracker</button>
+      <button class="ex-tab" onclick="swExtras('miles',this)">🏆 Milestones</button>
+    </div>
+    <div id="extras-content"></div>
+  </div>
+</div>
+
+<!-- COMMUNITY -->
+<div id="page-community" class="pg">
+  <div class="wrap">
+    <div style="margin-bottom:22px"><div style="font-family:'Instrument Serif',serif;font-size:1.6rem;margin-bottom:4px">Community</div><div style="color:var(--dim);font-size:.87rem">Tips, wins, and shared progress from people on the same journey.</div></div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:11px">Share a Win or Tip</div>
+      <textarea id="post-txt" rows="3" placeholder="e.g. 'Just hit my emergency fund goal!'"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:9px;gap:8px">
+        <select id="post-type" style="width:auto;padding:8px 11px;font-size:.79rem"><option value="win">🏆 Win</option><option value="tip">💡 Tip</option><option value="q">❓ Question</option></select>
+        <button class="btn bl bsm" onclick="postFeed()">Post →</button>
+      </div>
+    </div>
+    <div id="comm-feed"></div>
+  </div>
+</div>
+
+<script>
+// CONFIG
+const WR=0.80,FR=0.20;
+
+// AUTH
+const UK='fw_users',SK='fw_session';
+let CU=null;
+
+function gUsers(){try{return JSON.parse(localStorage.getItem(UK)||'{}')}catch{return {}}}
+function sUsers(u){localStorage.setItem(UK,JSON.stringify(u))}
+function gSess(){try{return JSON.parse(localStorage.getItem(SK)||'null')}catch{return null}}
+function sSess(u){localStorage.setItem(SK,JSON.stringify(u))}
+function clrSess(){localStorage.removeItem(SK)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function switchTab(t){
+  document.getElementById('form-li').style.display=t==='li'?'block':'none';
+  document.getElementById('form-su').style.display=t==='su'?'block':'none';
+  document.getElementById('tab-li').classList.toggle('act',t==='li');
+  document.getElementById('tab-su').classList.toggle('act',t==='su');
+  clrAMsg();
+}
+function clrAMsg(){['auth-err','auth-ok'].forEach(id=>{const e=document.getElementById(id);if(e){e.textContent='';e.classList.remove('on')}})}
+function aErr(m){const e=document.getElementById('auth-err');e.textContent=m;e.classList.add('on');document.getElementById('auth-ok').classList.remove('on')}
+function aOk(m){const e=document.getElementById('auth-ok');e.textContent=m;e.classList.add('on');document.getElementById('auth-err').classList.remove('on')}
+
+function doSignup(){
+  const name=v('su-name'),email=v('su-email').toLowerCase(),pass=v('su-pass');
+  if(!name)return aErr('Enter your name.');
+  if(!email.includes('@'))return aErr('Enter a valid email.');
+  if(pass.length<6)return aErr('Password must be 6+ characters.');
+  const users=gUsers();
+  if(users[email])return aErr('Account exists — try signing in.');
+  const user={id:uid(),name,email,isNew:true};
+  users[email]={...user,pass};sUsers(users);sSess(user);CU=user;
+  aOk('Account created!');setTimeout(onLogin,700);
+}
+function doLogin(){
+  const email=v('li-email').toLowerCase(),pass=v('li-pass');
+  if(!email)return aErr('Enter your email.');
+  if(!pass)return aErr('Enter your password.');
+  const found=gUsers()[email];
+  if(!found||found.pass!==pass)return aErr('Incorrect email or password.');
+  const user={id:found.id,name:found.name,email:found.email};
+  sSess(user);CU=user;onLogin();
+}
+function doDemo(){
+  CU={id:'demo',name:'Alex Rivera',email:'demo@freeway.app',isNew:true};
+  sSess(CU);
+  localStorage.setItem('fw_fin_demo',JSON.stringify({checking:3200,savings:8500,emergency:2000,stocks:12000,retirement:5500,vehicle:8000,cc:4200,student:18000,carloan:6500,salary:3800,freelance:400,rent:1200,food:350,transport:280,debt_payments:420,subs:60,insurance:150,entertainment:100}));
+  localStorage.setItem('fw_goals_demo',JSON.stringify([{id:'g1',name:'Emergency Fund (6mo)',target:7200,current:2000,color:'#2ef8c3',icon:'🛡️'},{id:'g2',name:'Pay Off Credit Cards',target:4200,current:1600,color:'#ff6b6b',icon:'💳'},{id:'g3',name:'Vacation Fund',target:2000,current:650,color:'#ffd166',icon:'✈️'}]));
+  localStorage.setItem('fw_prof_demo',JSON.stringify({name:'Alex Rivera',age:25,stage:'new-grad',goal:'debt-free'}));
+  onLogin();
+}
+function onLogin(){
+  sSess({id:CU.id,name:CU.name,email:CU.email});
+  renderNav();
+  if(CU.isNew){obStep=0;goPage('welcome');renderOB();}
+  else{goPage('dashboard');}
+}
+function doLogout(){clrSess();CU=null;renderNav();goPage('auth')}
+
+function initAuth(){
+  const s=gSess();
+  if(s){
+    // User is logged in — hide auth, show dashboard
+    const ae=document.getElementById('page-auth');
+    if(ae) ae.style.display='none';
+    CU=s;renderNav();goPage('dashboard');
+  } else {
+    // No session — auth is already visible via inline style, just render nav
+    renderNav();
+  }
+}
+
+// NAV
+function renderNav(){
+  const nc=document.getElementById('nav-center'),nr=document.getElementById('nav-right');
+  if(CU){
+    nc.innerHTML=['dashboard','scenario','extras','community'].map(p=>`<button class="nav-tab" id="nt-${p}" onclick="goPage('${p}')">${p.charAt(0).toUpperCase()+p.slice(1)}</button>`).join('');
+    const init=CU.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    nr.innerHTML=`<div class="nav-av" onclick="goPage('profile')" title="Profile">${init}</div>`;
+  }else{
+    nc.innerHTML='';
+    nr.innerHTML='<button class="npill" onclick="goPage(\'auth\')">Sign In</button><button class="npill cta" onclick="goPage(\'auth\')">Get Started</button>';
+  }
+}
+function setActiveTab(n){document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('act'));const e=document.getElementById('nt-'+n);if(e)e.classList.add('act')}
+
+// STORAGE
+function dKey(){return 'fw_dec_'+(CU?CU.id:'x')}
+function fKey(){return 'fw_fin_'+(CU?CU.id:'x')}
+function gKey(){return 'fw_goals_'+(CU?CU.id:'x')}
+function pKey(){return 'fw_prof_'+(CU?CU.id:'x')}
+function mKey(){return 'fw_miles_'+(CU?CU.id:'x')}
+function cKey(){return 'fw_comm'}
+function gDec(){try{return JSON.parse(localStorage.getItem(dKey())||'[]')}catch{return []}}
+function sDec(d){localStorage.setItem(dKey(),JSON.stringify(d))}
+function gFin(){try{return JSON.parse(localStorage.getItem(fKey())||'{}')}catch{return {}}}
+function sFin(d){localStorage.setItem(fKey(),JSON.stringify(d))}
+function gGoals(){try{return JSON.parse(localStorage.getItem(gKey())||'[]')}catch{return []}}
+function sGoals(d){localStorage.setItem(gKey(),JSON.stringify(d))}
+function gProf(){try{return JSON.parse(localStorage.getItem(pKey())||'{}')}catch{return {}}}
+function sProf(d){localStorage.setItem(pKey(),JSON.stringify(d))}
+function gMiles(){try{return JSON.parse(localStorage.getItem(mKey())||'[]')}catch{return []}}
+function sMiles(d){localStorage.setItem(mKey(),JSON.stringify(d))}
+function gComm(){try{return JSON.parse(localStorage.getItem(cKey())||'[]')}catch{return []}}
+function sComm(d){localStorage.setItem(cKey(),JSON.stringify(d))}
+
+// FINANCES CALC
+function calcFin(f){
+  const liquid=(f.checking||0)+(f.savings||0)+(f.emergency||0)+(f.cash||0);
+  const invest=(f.stocks||0)+(f.retirement||0)+(f.crypto||0);
+  const equity=Math.max(0,(f.homevalue||0)-(f.mortgage||0));
+  const otherA=(f.vehicle||0)+(f.business||0);
+  const tA=liquid+invest+equity+otherA;
+  const tD=(f.cc||0)+(f.student||0)+(f.carloan||0)+(f.personal_loan||0)+(f.medical||0)+(f.other_debt||0);
+  const nw=tA-tD-(f.mortgage||0);
+  const tIn=(f.salary||0)+(f.freelance||0)+(f.rental||0)+(f.inv_income||0);
+  const tEx=(f.rent||0)+(f.food||0)+(f.transport||0)+(f.debt_payments||0)+(f.subs||0)+(f.insurance||0)+(f.entertainment||0)+(f.healthcare||0)+(f.savings_contrib||0)+(f.utilities||0);
+  const cf=tIn-tEx;
+  const buf=tEx>0?liquid/tEx:(liquid>0?12:0);
+  const bufS=Math.min(100,(buf/6)*100);
+  const allD=tD+(f.mortgage||0);
+  const dS=Math.max(0,100-( tA>0?allD/tA:allD>0?1:0 )*100);
+  const cfR=tIn>0?cf/tIn:0;
+  const cfS=Math.min(100,Math.max(0,(cfR+0.1)/0.5*100));
+  const cov=allD>0?Math.min(tA/allD,2):2;
+  const aS=(cov/2)*100;
+  const ffs=Math.round(bufS*.30+dS*.25+cfS*.30+aS*.15);
+  return{liquid,invest,equity,otherA,tA,tD,nw,tIn,tEx,cf,ffs};
+}
+function ffsLbl(s){
+  if(s>=80)return{t:'Excellent Freedom',d:'Low debt, healthy cash flow — you have real flexibility.'};
+  if(s>=60)return{t:'Good Standing',d:'Solid foundation. Reduce debt to unlock more freedom.'};
+  if(s>=40)return{t:'Building Momentum',d:'Improving cash flow and paying down debt will help.'};
+  if(s>=20)return{t:'Constrained',d:'Prioritize emergency fund and debt reduction.'};
+  return{t:'High Pressure',d:'Focus on stability — small cash flow improvements matter.'};
+}
+
+// ONBOARDING
+const OB=[
+  {icon:'👋',title:'Welcome to Freeway',body:'Freeway helps you make better life decisions by combining AI analysis with your real financial picture.',feats:null},
+  {icon:'◈',title:'The Freedom Score',body:'Every decision gets scored not just by cost or convenience — but by how much each option keeps your future open.',feats:[{i:'💰',t:'Financial flexibility'},{i:'⏱️',t:'Time freedom & low lock-in'},{i:'🛤️',t:'Path flexibility & autonomy'}]},
+  {icon:'🚀',title:"You're all set",body:"Set up your finances in Profile to unlock your Financial Freedom Score, then run your first Scenario.",feats:null},
+];
+let obStep=0;
+function renderOB(){
+  document.getElementById('ob-dots').innerHTML=OB.map((_,i)=>`<div class="ob-dot ${i===obStep?'act':i<obStep?'done':''}"></div>`).join('');
+  const s=OB[obStep];
+  document.getElementById('ob-content').innerHTML=`<div class="ob-card">
+    <div class="ob-icon">${s.icon}</div>
+    <h2>${s.title}</h2>
+    <p>${s.body}</p>
+    ${s.feats?`<div class="ob-feats">${s.feats.map(f=>`<div class="ob-feat"><div class="ob-feat-i">${f.i}</div><span>${f.t}</span></div>`).join('')}</div>`:''}
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      ${obStep>0?`<button class="btn bg bsm" onclick="obStep--;renderOB()">← Back</button>`:''}
+      ${obStep<OB.length-1?`<button class="btn bl bsm" onclick="obStep++;renderOB()">Next →</button>`:`<button class="btn bl bsm" onclick="finOB()">Go to Dashboard →</button>`}
+    </div>
+  </div>`;
+}
+function finOB(){const s=gSess();if(s){s.isNew=false;sSess(s)}CU.isNew=false;goPage('dashboard')}
+
+// DASHBOARD
+function renderDash(){
+  const hr=new Date().getHours();
+  const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  setText('dash-greet',`${greet}, ${CU.name.split(' ')[0]} 👋`);
+  setText('dash-date',new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
+  const fin=gFin(),has=Object.keys(fin).length>0;
+  if(has){
+    const c=calcFin(fin);
+    const bn=document.getElementById('nw-banner');
+    bn.className='nw-banner '+(c.nw>0?'nw-pos':c.nw<0?'nw-neg':'nw-zero');
+    const nn=document.getElementById('nw-num');
+    nn.textContent=(c.nw<0?'-':'')+'$'+fmt(Math.abs(c.nw));
+    nn.style.color=c.nw>0?'var(--lime)':c.nw<0?'var(--coral)':'var(--dim)';
+    setText('nw-hint',c.nw>=0?'Assets exceed debts.':'Debts exceed assets — focus on reduction.');
+    document.getElementById('nw-stats').innerHTML=`
+      <div class="nws"><div class="sv" style="color:var(--teal)">$${fmt(c.tA)}</div><div class="sl">Total Assets</div></div>
+      <div class="nws"><div class="sv" style="color:var(--coral)">$${fmt(c.tD+(fin.mortgage||0))}</div><div class="sl">Total Debts</div></div>
+      <div class="nws"><div class="sv" style="color:${c.cf>=0?'var(--lime)':'var(--coral)'}">${c.cf>=0?'+':''} $${fmt(Math.abs(c.cf))}</div><div class="sl">Monthly Cash Flow</div></div>`;
+    document.getElementById('dash-stats').innerHTML=`
+      <div class="stat-card"><div class="s-lbl">Liquid Cash</div><div class="s-val" style="color:var(--teal)">$${fmt(c.liquid)}</div><div class="s-sub">Checking + savings</div></div>
+      <div class="stat-card"><div class="s-lbl">Investments</div><div class="s-val" style="color:var(--gold)">$${fmt(c.invest)}</div><div class="s-sub">Stocks + retirement</div></div>
+      <div class="stat-card"><div class="s-lbl">Total Debt</div><div class="s-val" style="color:var(--coral)">$${fmt(c.tD+(fin.mortgage||0))}</div><div class="s-sub">All liabilities</div></div>
+      <div class="stat-card"><div class="s-lbl">Monthly Income</div><div class="s-val" style="color:var(--lime)">$${fmt(c.tIn)}</div><div class="s-sub">All sources</div></div>`;
+    const arc=document.getElementById('ffs-arc');
+    if(arc)arc.style.strokeDashoffset=188*(1-c.ffs/100);
+    setText('ffs-num',c.ffs);
+    const l=ffsLbl(c.ffs);setText('ffs-title',l.t);setText('ffs-desc',l.d);
+  }else{
+    setText('nw-num','—');setText('nw-hint','Set up finances in Profile →');
+    document.getElementById('nw-stats').innerHTML='';
+    document.getElementById('dash-stats').innerHTML='<div class="stat-card"><div class="s-lbl">Net Worth</div><div class="s-val" style="color:var(--dim)">—</div><div class="s-sub">Not set up</div></div><div class="stat-card"><div class="s-lbl">Cash Flow</div><div class="s-val" style="color:var(--dim)">—</div><div class="s-sub">Not set up</div></div>';
+    setText('ffs-num','—');setText('ffs-title','Not set up');setText('ffs-desc','Add financial data in Profile.');
+  }
+  const goals=gGoals().slice(0,3);
+  const dg=document.getElementById('dash-goals');
+  dg.innerHTML=goals.length?goals.map(g=>{const pct=Math.min(100,Math.round((g.current/g.target)*100));return`<div class="g-item"><div class="g-head"><span class="g-name">${g.icon||'🎯'} ${esc(g.name)}</span><span class="g-pct" style="color:${g.color||'var(--lime)'}">${pct}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.color||'var(--lime)'}"></div></div><div class="g-amts"><span>$${fmt(g.current)}</span><span>$${fmt(g.target)}</span></div></div>`}).join(''):`<div class="empty" style="padding:16px 0"><div class="empty-icon">🎯</div><p style="font-size:.8rem">No goals — <a href="#" onclick="goPage('extras')" style="color:var(--lime)">add one →</a></p></div>`;
+  const decs=gDec().slice(0,4);
+  const dd=document.getElementById('dash-decisions');
+  dd.innerHTML=decs.length?decs.map(d=>`<div class="rd-item" onclick="viewDec('${d.id}')"><div class="rd-title">${esc(d.title)}</div><div class="rd-w">★ ${esc(d.ai?.winner||'—')}</div><div class="rd-s">${d.ai?.options?.[0]?.finalScore?.toFixed(1)||'—'}/10</div></div>`).join(''):`<div class="empty" style="padding:16px 0"><div class="empty-icon">🗺️</div><p style="font-size:.8rem">No decisions — <a href="#" onclick="goPage('scenario')" style="color:var(--lime)">create one →</a></p></div>`;
+}
+
+// SCENARIO
+let sPhase=0,sTitle='',sCtx='',sOpts=['',''],sResult=null,sCurId=null;
+function goPhase(p){
+  if(p===1){sTitle=document.getElementById('sc-title')?.value?.trim()||sTitle;sCtx=document.getElementById('sc-ctx')?.value?.trim()||sCtx;if(!sTitle&&p>0){toast('Enter a decision title first');return}}
+  sPhase=p;renderScen();
+}
+function renderScen(){
+  for(let i=0;i<3;i++){const b=document.getElementById('spb'+i);if(b)b.className='sp-btn'+(i===sPhase?' act':i<sPhase?' done':'');}
+  const el=document.getElementById('sp-content');
+  if(sPhase===0){
+    el.innerHTML=`<div class="card" style="margin-bottom:12px">
+      <div class="fld"><label class="fl">Your Decision</label><input type="text" id="sc-title" placeholder="e.g. Should I take the city job or stay freelance?" value="${esc(sTitle)}"/></div>
+      <div class="fld" style="margin-bottom:0"><label class="fl">Your Context</label><textarea id="sc-ctx" rows="4" placeholder="Describe your situation — your financial position, values, timeline, lifestyle.">${esc(sCtx)}</textarea></div>
+    </div>
+    <div class="ai-note"><span>🤖</span><span>The AI will use your stored financial data as context and show projected financial impact.</span></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:18px"><button class="btn bl bsm" onclick="goPhase(1)">Next: Add Options →</button></div>`;
+  }else if(sPhase===1){
+    el.innerHTML=`<div class="card" style="margin-bottom:12px">
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px">Your Options</div>
+      <div id="sc-opts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:9px"></div>
+      <button class="add-opt" onclick="addSOpt()">+ Add option</button>
+    </div>
+    <div class="ai-note"><span>🤖</span><span>Add 2–6 options. The AI will score each one and show projected financial impact based on your numbers.</span></div>
+    <div style="display:flex;justify-content:space-between;margin-top:18px;flex-wrap:wrap;gap:9px">
+      <button class="btn bg bsm" onclick="goPhase(0)">← Back</button>
+      <button class="btn bl bsm" onclick="runScen()">Analyze with AI →</button>
+    </div>`;
+    renderSOpts();
+  }else{
+    if(!sResult){el.innerHTML=`<div class="ai-loader"><div class="ai-ring"></div><div id="ai-msg" style="font-size:.98rem;font-weight:600;margin-bottom:5px">Analyzing…</div><div id="ai-sub" style="color:var(--dim);font-size:.83rem"></div></div>`;}
+    else renderSResults(el);
+  }
+}
+function renderSOpts(){
+  const el=document.getElementById('sc-opts');if(!el)return;
+  el.innerHTML=sOpts.map((vl,i)=>`<div class="opt-row"><span class="opt-ltr">${String.fromCharCode(65+i)}</span><input type="text" placeholder="Option ${String.fromCharCode(65+i)}" value="${esc(vl)}" oninput="sOpts[${i}]=this.value"/>${sOpts.length>2?`<button class="rm-btn" onclick="sOpts.splice(${i},1);renderSOpts()">✕</button>`:''}</div>`).join('');
+}
+function addSOpt(){if(sOpts.length>=6){toast('Max 6 options');return}sOpts.push('');renderSOpts()}
+
+let aiT;
+const AIMS=[['Analyzing your decision…','Reading your context'],['Choosing factors…','Tailoring to your situation'],['Scoring options…','Assigning weights'],['Calculating Freedom Scores…','Measuring flexibility'],['Projecting impact…','Using your financial data'],['Writing reasoning…','Almost done']];
+function animAI(){let i=0;clearInterval(aiT);aiT=setInterval(()=>{const h=document.getElementById('ai-msg'),s=document.getElementById('ai-sub');if(h&&i<AIMS.length){h.textContent=AIMS[i][0];if(s)s.textContent=AIMS[i][1];i++}},1800)}
+
+async function runScen(){
+  sOpts=sOpts.map((_,i)=>{const e=document.getElementById('sc-opts')?.querySelectorAll('input')[i];return e?e.value:_;});
+  const opts=sOpts.filter(o=>o.trim());
+  if(opts.length<2){toast('Add at least 2 options');return}
+  sTitle=document.getElementById('sc-title')?.value?.trim()||sTitle;
+  sCtx=document.getElementById('sc-ctx')?.value?.trim()||sCtx;
+  sPhase=2;sResult=null;renderScen();animAI();
+  const fin=gFin();
+  const c=Object.keys(fin).length?calcFin(fin):null;
+  const finSum=c?`Net worth $${fmt(c.nw)}, liquid $${fmt(c.liquid)}, total debt $${fmt(c.tD+(fin.mortgage||0))}, income $${fmt(c.tIn)}/mo, expenses $${fmt(c.tEx)}/mo, cash flow ${c.cf>=0?'+':''}$${fmt(Math.abs(c.cf))}/mo, Freedom Score ${c.ffs}/100.`:'No financial data provided.';
+  try{
+    const ai=await callAI(sTitle,sCtx,opts,finSum);
+    const dec={id:uid(),title:sTitle,context:sCtx,options:opts,createdAt:new Date().toISOString(),ai};
+    const decs=gDec();decs.unshift(dec);sDec(decs);
+    sCurId=dec.id;sResult=ai;clearInterval(aiT);renderScen();
+    setTimeout(()=>{document.querySelectorAll('.f-fill[data-w]').forEach(b=>{b.style.width=b.dataset.w+'%'})},80);
+  }catch(e){
+    clearInterval(aiT);
+    document.getElementById('sp-content').innerHTML=`<div class="card" style="text-align:center;padding:36px"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><div style="font-weight:600;margin-bottom:7px">AI Analysis Failed</div><div style="color:var(--dim);font-size:.83rem;margin-bottom:18px">${esc(e.message)}</div><button class="btn bl bsm" onclick="goPhase(1)">← Try Again</button></div>`;
+  }
+}
+
+function renderSResults(el){
+  const ai=sResult,w=ai.options[0];
+  el.innerHTML=`<div class="win-banner">
+    <div class="win-ey">◈ Freeway Recommends</div>
+    <div class="win-name">${esc(w.name)}</div>
+    <div class="win-reason">${esc(ai.reasoning)}</div>
+    <div class="win-chips"><div class="wc wc-w">Weighted: <strong>${w.weightedScore.toFixed(1)}/10</strong></div><div class="wc wc-f">◈ Freedom: <strong>${w.freedomScore.toFixed(1)}/10</strong></div><div class="wc wc-fin">★ Final: <strong>${w.finalScore.toFixed(1)}/10</strong></div></div>
+  </div>
+  ${ai.projections&&ai.projections.length?`<div class="proj-box"><div class="proj-title">📊 Financial Impact Projections</div><div class="proj-grid">${ai.projections.map(p=>`<div class="proj-item"><div class="proj-opt">${esc(p.option)}</div><div class="proj-val ${parseFloat(p.monthlyImpact)>=0?'proj-pos':'proj-neg'}">${parseFloat(p.monthlyImpact)>=0?'+':''}$${fmt(Math.abs(parseFloat(p.monthlyImpact)))}/mo</div><div class="proj-desc">${esc(p.description)}</div></div>`).join('')}</div></div>`:''}
+  <div class="card" style="margin-bottom:14px"><div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px">How is the Final Score calculated?</div><div class="feq"><div class="fb lime"><div class="fn">${(WR*100).toFixed(0)}%</div><div class="fll">Weighted</div></div><div class="fop">+</div><div class="fb teal"><div class="fn">${(FR*100).toFixed(0)}%</div><div class="fll">◈ Freedom</div></div><div class="fop">=</div><div class="fb gold"><div class="fn">★ Final</div><div class="fll">Score</div></div></div></div>
+  ${ai.options.map((opt,rank)=>resCard(opt,rank+1,ai.factors)).join('')}
+  <div class="card" style="margin-top:12px"><div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:9px">🧠 Why these weights?</div><div style="font-size:.81rem;color:var(--dim);line-height:1.7">${esc(ai.weightingRationale)}</div></div>
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:18px"><button class="btn bg bsm" onclick="resetScen()">← New Decision</button><button class="btn bg bsm" onclick="goPage('dashboard')">Dashboard</button><button class="btn bd bsm" onclick="delCurScen()">Delete</button></div>`;
+}
+function resCard(opt,rank,factors){
+  const bars=factors.map(f=>{const s=opt.ratings?.[f.id]??5;return`<div class="f-row"><div class="f-nm">${f.isFreedom?'<div class="f-dot"></div>':''}${esc(f.name)}</div><div class="f-track"><div class="f-fill ${f.isFreedom?'ff':''}" data-w="${(s/10)*100}"></div></div><div class="f-num">${s}</div><div class="f-wt">×${f.weight}</div></div>`}).join('');
+  return`<div class="res-card ${rank===1?'win':''}"><div class="res-head"><div class="res-rank r${rank}">${rank}</div><div class="res-name">${esc(opt.name)}${rank===1?'<span style="font-size:.67rem;font-weight:700;color:var(--lime);margin-left:7px">★ WINNER</span>':''}</div><div class="res-scores"><div class="rs"><div class="rv">${opt.weightedScore.toFixed(1)}</div><div class="rl">Weighted</div></div><div class="rs rs-f"><div class="rv">${opt.freedomScore.toFixed(1)}</div><div class="rl">◈ Freedom</div></div><div class="rs rs-fin"><div class="rv">${opt.finalScore.toFixed(1)}</div><div class="rl">★ Final</div></div></div></div><div class="res-body">${bars}${opt.insight?`<div class="ins-txt">${esc(opt.insight)}</div>`:''}</div></div>`;
+}
+function resetScen(){sPhase=0;sTitle='';sCtx='';sOpts=['',''];sResult=null;sCurId=null;renderScen()}
+function delCurScen(){if(!sCurId)return;if(!confirm('Delete?'))return;sDec(gDec().filter(d=>d.id!==sCurId));sCurId=null;resetScen();toast('Deleted')}
+function viewDec(id){const d=gDec().find(d=>d.id===id);if(!d)return;sTitle=d.title;sCtx=d.context;sOpts=d.options||['',''];sResult=d.ai;sCurId=d.id;sPhase=2;goPage('scenario');setTimeout(()=>{renderScen();setTimeout(()=>{document.querySelectorAll('.f-fill[data-w]').forEach(b=>{b.style.width=b.dataset.w+'%'})},80)},50)}
+
+// API
+async function callAI(title,ctx,opts,finSum){
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:buildPrompt(title,ctx,opts,finSum)}]})});
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${resp.status}`)}
+  const data=await resp.json();
+  const raw=data.content.map(b=>b.text||'').join('');
+  const clean=raw.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  let json;try{json=JSON.parse(clean)}catch{const m=clean.match(/\{[\s\S]*\}/);if(!m)throw new Error('AI returned invalid JSON');json=JSON.parse(m[0])}
+  return json;
+}
+function buildPrompt(title,ctx,opts,finSum){
+  return `You are the AI engine for "Freeway – Decision Lab."
+Decision: "${title}"
+Context: "${ctx||'None.'}"
+User Financial Snapshot: ${finSum}
+Options:
+${opts.map((o,i)=>`${String.fromCharCode(65+i)}. ${o}`).join('\n')}
+Return ONLY valid JSON, no markdown, no code fences.
+Instructions: Choose 5-8 relevant factors. Weight 1-5. Mark isFreedom:true for time/financial/risk/path/autonomy/stress/growth factors. Rate each option 1-10 per factor realistically. weightedScore=sum(r*w)/sum(w). freedomScore=weighted avg of freedom factors. finalScore=(${WR}*weightedScore)+(${FR}*freedomScore). Sort by finalScore desc. projections: for each option estimate monthly cash flow impact as a number. Include reasoning(2-3 sentences), insight per option(1 sentence), weightingRationale(1-2 sentences).
+JSON: {"factors":[{"id":"str","name":"str","isFreedom":bool,"weight":num,"tooltip":"str"}],"options":[{"name":"str","ratings":{},"weightedScore":num,"freedomScore":num,"finalScore":num,"insight":"str"}],"projections":[{"option":"str","monthlyImpact":num,"description":"str"}],"winner":"str","reasoning":"str","weightingRationale":"str"}`;
+}
+
+// PROFILE
+const FA=[{id:'checking',l:'Checking'},{id:'savings',l:'Savings'},{id:'emergency',l:'Emergency Fund'},{id:'stocks',l:'Stocks/Brokerage'},{id:'retirement',l:'Retirement (401k)'},{id:'crypto',l:'Crypto'},{id:'homevalue',l:'Home Value'},{id:'mortgage',l:'Mortgage Balance'},{id:'vehicle',l:'Vehicle Value'},{id:'business',l:'Business Value'}];
+const FD=[{id:'cc',l:'Credit Card Debt'},{id:'student',l:'Student Loans'},{id:'carloan',l:'Car Loan'},{id:'personal_loan',l:'Personal Loan'},{id:'medical',l:'Medical Debt'},{id:'other_debt',l:'Other Debt'}];
+const FM=[{id:'salary',l:'Take-Home Pay',t:'in'},{id:'freelance',l:'Side Income',t:'in'},{id:'rental',l:'Rental Income',t:'in'},{id:'inv_income',l:'Investment Returns',t:'in'},{id:'rent',l:'Rent/Mortgage Pmt',t:'ex'},{id:'utilities',l:'Utilities',t:'ex'},{id:'food',l:'Food & Groceries',t:'ex'},{id:'transport',l:'Transportation',t:'ex'},{id:'debt_payments',l:'Debt Payments',t:'ex'},{id:'subs',l:'Subscriptions',t:'ex'},{id:'insurance',l:'Insurance',t:'ex'},{id:'entertainment',l:'Entertainment',t:'ex'},{id:'healthcare',l:'Healthcare',t:'ex'},{id:'savings_contrib',l:'Savings Contribution',t:'ex'}];
+
+function mkFinRows(fields,containerId){
+  document.getElementById(containerId).innerHTML=fields.map(f=>`<div class="fin-row"><label>${f.l}</label><div class="fin-wrap"><span class="fin-pfx">$</span><input class="fin-in" type="number" id="fi-${f.id}" placeholder="0" oninput="recalcProf()"/></div></div>`).join('');
+}
+function renderProfile(){
+  const prof=gProf(),fin=gFin();
+  const init=CU.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  setText('prof-av',init);setText('prof-name-disp',CU.name);setText('prof-email-disp',CU.email);
+  const sv=(id,val)=>{const e=document.getElementById(id);if(e&&val!==undefined)e.value=val};
+  sv('pf-name',prof.name||CU.name);sv('pf-age',prof.age||'');sv('pf-stage',prof.stage||'');sv('pf-goal',prof.goal||'');
+  mkFinRows(FA,'fin-assets');mkFinRows(FD,'fin-debts');mkFinRows(FM,'fin-monthly');
+  [...FA,...FD,...FM].forEach(f=>{const e=document.getElementById('fi-'+f.id);if(e&&fin[f.id])e.value=fin[f.id]});
+  recalcProf();
+}
+function recalcProf(){
+  const fin={};[...FA,...FD,...FM].forEach(f=>{fin[f.id]=parseFloat(document.getElementById('fi-'+f.id)?.value)||0});
+  const aTotal=FA.reduce((s,f)=>s+(fin[f.id]||0),0)-(fin.mortgage||0);
+  const dTotal=FD.reduce((s,f)=>s+(fin[f.id]||0),0);
+  const inTotal=FM.filter(f=>f.t==='in').reduce((s,f)=>s+(fin[f.id]||0),0);
+  const exTotal=FM.filter(f=>f.t==='ex').reduce((s,f)=>s+(fin[f.id]||0),0);
+  const cf=inTotal-exTotal;
+  setText('fst-assets','$'+fmt(Math.max(0,aTotal)));
+  setText('fst-debts','$'+fmt(dTotal));
+  const ce=document.getElementById('fst-cf');
+  if(ce){ce.textContent=(cf>=0?'+':'')+' $'+fmt(Math.abs(cf))+'/mo';ce.style.color=cf>=0?'var(--lime)':'var(--coral)'}
+}
+let pST;
+function schedProfSave(){clearTimeout(pST);pST=setTimeout(saveProf,1200)}
+function saveProf(){
+  const p={name:document.getElementById('pf-name')?.value?.trim()||CU.name,age:parseInt(document.getElementById('pf-age')?.value)||0,stage:document.getElementById('pf-stage')?.value||'',goal:document.getElementById('pf-goal')?.value||''};
+  sProf(p);if(p.name){CU.name=p.name;sSess({id:CU.id,name:CU.name,email:CU.email});renderNav()}
+}
+function saveFin(){
+  const fin={};[...FA,...FD,...FM].forEach(f=>{fin[f.id]=parseFloat(document.getElementById('fi-'+f.id)?.value)||0});
+  sFin(fin);saveProf();toast('Finances saved ✓');
+}
+
+// EXTRAS
+let extTab='goals';
+function swExtras(t,el){extTab=t;document.querySelectorAll('.ex-tab').forEach(e=>e.classList.remove('act'));el.classList.add('act');renderExtras()}
+function renderExtras(){
+  const el=document.getElementById('extras-content');
+  if(extTab==='goals')renderGoals(el);
+  else if(extTab==='debt')renderDebt(el);
+  else renderMiles(el);
+}
+function renderGoals(el){
+  const goals=gGoals();
+  el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn bl bsm" onclick="openAddGoal()">+ Add Goal</button></div>`+
+  (!goals.length?`<div class="empty"><div class="empty-icon">🎯</div><h3>No goals yet</h3><p>Add a savings target.</p></div>`:
+  goals.map(g=>{const pct=Math.min(100,Math.round((g.current/g.target)*100));const rem=Math.max(0,g.target-g.current);return`<div class="goal-card"><div class="goal-head"><div><div style="font-weight:700;font-size:.92rem">${g.icon||'🎯'} ${esc(g.name)}</div><div style="font-size:.74rem;color:var(--dim);margin-top:2px">${pct}% · $${fmt(rem)} remaining</div></div><div style="display:flex;gap:5px"><button class="btn bg bxs" onclick="openUpdGoal('${g.id}')">+ Add</button><button class="btn bd bxs" onclick="delGoal('${g.id}')">✕</button></div></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${g.color||'var(--lime)'}"></div></div><div class="goal-amts"><span>$<strong>${fmt(g.current)}</strong></span><span>Goal: <strong>$${fmt(g.target)}</strong></span></div></div>`}).join(''));
+}
+function openAddGoal(){openMod(`<div class="modal-title">Add Goal</div><div class="modal-sub">Set a savings target.</div><div class="fld"><label class="fl">Goal Name</label><input type="text" id="ng-name" placeholder="e.g. Emergency Fund"/></div><div class="fld"><label class="fl">Target ($)</label><input type="number" id="ng-target" placeholder="0"/></div><div class="fld"><label class="fl">Current Saved ($)</label><input type="number" id="ng-curr" placeholder="0"/></div><div class="fld"><label class="fl">Icon (emoji)</label><input type="text" id="ng-icon" placeholder="🎯" maxlength="2"/></div><div class="fld"><label class="fl">Color</label><select id="ng-col"><option value="#b8f552">🟢 Lime</option><option value="#2ef8c3">🩵 Teal</option><option value="#ffd166">🟡 Gold</option><option value="#ff6b6b">🔴 Red</option><option value="#a78bfa">🟣 Purple</option><option value="#60a5fa">🔵 Blue</option></select></div><div style="display:flex;gap:9px;justify-content:flex-end;margin-top:6px"><button class="btn bg bsm" onclick="closeMod()">Cancel</button><button class="btn bl bsm" onclick="saveNewGoal()">Add</button></div>`)}
+function saveNewGoal(){
+  const name=document.getElementById('ng-name')?.value?.trim();
+  const target=parseFloat(document.getElementById('ng-target')?.value)||0;
+  const current=parseFloat(document.getElementById('ng-curr')?.value)||0;
+  const icon=document.getElementById('ng-icon')?.value||'🎯';
+  const color=document.getElementById('ng-col')?.value||'#b8f552';
+  if(!name)return toast('Enter a goal name');if(!target)return toast('Enter a target');
+  const goals=gGoals();goals.push({id:uid(),name,target,current,icon,color});sGoals(goals);closeMod();renderExtras();toast('Goal added ✓');
+}
+function openUpdGoal(id){
+  const g=gGoals().find(g=>g.id===id);if(!g)return;
+  openMod(`<div class="modal-title">Update Progress</div><div class="modal-sub">${g.icon||'🎯'} ${esc(g.name)}</div><div style="background:var(--ink3);border-radius:var(--r-sm);padding:13px;margin-bottom:14px;text-align:center"><div style="font-size:.7rem;color:var(--dim);margin-bottom:3px">Currently saved</div><div style="font-family:'Instrument Serif',serif;font-size:1.7rem;color:var(--lime)">$${fmt(g.current)}</div><div style="font-size:.78rem;color:var(--dim)">of $${fmt(g.target)}</div></div><div class="fld"><label class="fl">Add Amount ($)</label><input type="number" id="ug-add" placeholder="0"/></div><div class="fld"><label class="fl">Or set exact amount ($)</label><input type="number" id="ug-set" placeholder="${g.current}"/></div><div style="display:flex;gap:9px;justify-content:flex-end;margin-top:6px"><button class="btn bg bsm" onclick="closeMod()">Cancel</button><button class="btn bl bsm" onclick="updGoal('${id}')">Update</button></div>`);
+}
+function updGoal(id){
+  const goals=gGoals();const idx=goals.findIndex(g=>g.id===id);if(idx<0)return;
+  const add=parseFloat(document.getElementById('ug-add')?.value)||0;
+  const set=parseFloat(document.getElementById('ug-set')?.value);
+  if(!isNaN(set)&&set>=0)goals[idx].current=set;else goals[idx].current=Math.max(0,goals[idx].current+add);
+  sGoals(goals);closeMod();renderExtras();toast('Updated ✓');
+}
+function delGoal(id){if(!confirm('Delete?'))return;sGoals(gGoals().filter(g=>g.id!==id));renderExtras();toast('Deleted')}
+
+function renderDebt(el){
+  const fin=gFin();
+  const items=[{id:'cc',n:'Credit Cards',r:'~20% APR',c:'#ff6b6b'},{id:'student',n:'Student Loans',r:'~6% APR',c:'#ffd166'},{id:'carloan',n:'Car Loan',r:'~6% APR',c:'#a78bfa'},{id:'personal_loan',n:'Personal Loan',r:'~10% APR',c:'#60a5fa'},{id:'medical',n:'Medical Debt',r:'0% often',c:'#2ef8c3'},{id:'mortgage',n:'Mortgage',r:'~7% APR',c:'#b8f552'}].filter(d=>(fin[d.id]||0)>0);
+  const total=items.reduce((s,d)=>s+(fin[d.id]||0),0);
+  el.innerHTML=!items.length?`<div class="empty"><div class="empty-icon">🎉</div><h3>No debts recorded</h3><p>Add balances in Profile to track payoff.</p><button class="btn bg bsm" onclick="goPage('profile')">Go to Profile →</button></div>`:`<div class="card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px"><div><div style="font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Total Debt</div><div style="font-family:'Instrument Serif',serif;font-size:1.7rem;color:var(--coral)">$${fmt(total)}</div></div><button class="btn bg bsm" onclick="goPage('profile')">Update Balances →</button></div>`+items.map(d=>{const amt=fin[d.id]||0;const pct=total>0?(amt/total)*100:0;return`<div class="debt-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700">${d.n}</div><div style="font-size:.73rem;color:var(--coral)">${d.r}</div></div><div style="display:flex;gap:14px;margin-bottom:9px;font-size:.8rem"><span style="color:var(--dim)">Balance: <strong style="color:var(--text)">$${fmt(amt)}</strong></span><span style="color:var(--dim)">${pct.toFixed(0)}% of total</span></div><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${d.c}"></div></div></div>`}).join('');
+}
+
+const DEF_MILES=[{id:'m1',t:'First $1,000 Saved',d:'Your first real savings milestone',i:'💰',done:false},{id:'m2',t:'Emergency Fund Started',d:'Any amount set aside for emergencies',i:'🛡️',done:false},{id:'m3',t:'3-Month Emergency Fund',d:'3× your monthly expenses saved',i:'🏦',done:false},{id:'m4',t:'6-Month Emergency Fund',d:'6× your monthly expenses — true security',i:'🔐',done:false},{id:'m5',t:'Paid Off a Credit Card',d:'Cleared an entire credit card balance',i:'💳',done:false},{id:'m6',t:'First Investment Made',d:'Invested in stocks, ETFs, or retirement',i:'📈',done:false},{id:'m7',t:'Positive Net Worth',d:'Your assets now exceed your liabilities',i:'🌱',done:false},{id:'m8',t:'First $10,000 Net Worth',d:'A real financial foundation',i:'🏆',done:false},{id:'m9',t:'Debt-Free (excl. mortgage)',d:'No more consumer debt',i:'🦅',done:false},{id:'m10',t:'3-Month Freelance Runway',d:'Could survive 3 months without a job',i:'🗺️',done:false}];
+function renderMiles(el){
+  let miles=gMiles();if(!miles.length){miles=[...DEF_MILES];sMiles(miles)}
+  const done=miles.filter(m=>m.done).length;
+  el.innerHTML=`<div class="card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px"><div><div style="font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)">Completed</div><div style="font-family:'Instrument Serif',serif;font-size:1.7rem;color:var(--lime)">${done} / ${miles.length}</div></div><div class="prog-track" style="width:180px;height:8px"><div class="prog-fill" style="width:${(done/miles.length)*100}%;background:linear-gradient(90deg,var(--teal),var(--lime))"></div></div></div>`+miles.map(m=>`<div class="ms-card" style="${m.done?'opacity:.65':''}"><div class="ms-icon">${m.i}</div><div class="ms-body"><div class="ms-title" style="${m.done?'text-decoration:line-through;color:var(--dim)':''}">${m.t}</div><div class="ms-desc">${m.d}</div></div><div class="ms-chk ${m.done?'done':''}" onclick="togMile('${m.id}')">${m.done?'✓':''}</div></div>`).join('');
+}
+function togMile(id){const miles=gMiles();const m=miles.find(m=>m.id===id);if(!m)return;m.done=!m.done;sMiles(miles);renderExtras();if(m.done)toast('🏆 Milestone unlocked: '+m.t)}
+
+// COMMUNITY
+const SEED=[
+  {id:'p1',author:'Jordan T.',av:'#b8f552',in:'JT',type:'win',body:'Just hit my <strong>3-month emergency fund goal</strong>! Took 9 months of $200/month. The milestone tracker kept me honest.',time:'2h ago',likes:14,liked:false},
+  {id:'p2',author:'Sam K.',av:'#2ef8c3',in:'SK',type:'tip',body:'💡 Use the Scenario Tool to compare job offers. The AI Freedom Score revealed the "lower paying" option gave way more flexibility. No regrets.',time:'5h ago',likes:31,liked:false},
+  {id:'p3',author:'Riley M.',av:'#a78bfa',in:'RM',type:'win',body:'Paid off my last <strong>credit card</strong> today 🎉 $4,200, 14 months. Net worth officially positive for the first time.',time:'1d ago',likes:47,liked:false},
+  {id:'p4',author:'Morgan L.',av:'#ffd166',in:'ML',type:'tip',body:'💡 For students: even $50/month in a high-yield savings account improves your Freedom Score meaningfully. Small consistent moves beat big sporadic ones.',time:'2d ago',likes:22,liked:false},
+  {id:'p5',author:'Casey W.',av:'#ff6b6b',in:'CW',type:'q',body:'❓ Anyone use Freeway for grad school decisions? The MBA scores way lower on Freedom Score because of debt lock-in — really helpful framing.',time:'3d ago',likes:8,liked:false},
+];
+function renderComm(){
+  let posts=gComm();if(!posts.length){posts=[...SEED];sComm(posts)}
+  document.getElementById('comm-feed').innerHTML=posts.map(p=>`<div class="cf-card"><div class="cf-top"><div class="cf-av" style="background:${p.av}">${p.in}</div><div><div class="cf-name">${esc(p.author)}</div></div><div class="cf-time">${p.time}</div><span class="badge ${p.type==='win'?'b-lime':p.type==='tip'?'b-teal':'b-purple'}">${p.type==='win'?'🏆 Win':p.type==='tip'?'💡 Tip':'❓ Q'}</span></div><div class="cf-body">${p.body}</div><div><button class="cf-like ${p.liked?'liked':''}" onclick="likePost('${p.id}')">♥ ${p.likes}</button></div></div>`).join('');
+}
+function likePost(id){const posts=gComm();const p=posts.find(p=>p.id===id);if(!p)return;p.liked=!p.liked;p.likes+=p.liked?1:-1;sComm(posts);renderComm()}
+function postFeed(){
+  const body=document.getElementById('post-txt')?.value?.trim();
+  const type=document.getElementById('post-type')?.value||'win';
+  if(!body||body.length<10)return toast('Write at least 10 characters');
+  const posts=gComm();
+  const init=CU.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const cols=['#b8f552','#2ef8c3','#a78bfa','#ffd166','#60a5fa','#ff6b6b'];
+  const col=cols[CU.id.charCodeAt(0)%cols.length];
+  posts.unshift({id:uid(),author:CU.name,av:col,in:init,type,body:esc(body),time:'just now',likes:0,liked:false});
+  sComm(posts);document.getElementById('post-txt').value='';renderComm();toast('Posted! 🎉');
+}
+
+// MODAL
+function openMod(html){document.getElementById('modal-box').innerHTML=html;document.getElementById('modal-bg').classList.add('on')}
+function closeMod(e){if(!e||e.target===document.getElementById('modal-bg'))document.getElementById('modal-bg').classList.remove('on')}
+
+// ROUTING
+const PROT=['dashboard','scenario','profile','extras','community'];
+function goPage(name){
+  if(PROT.includes(name)&&!CU){goPage('auth');return}
+  // Hide all pages (including auth which has no class)
+  document.querySelectorAll('.pg,.pgf').forEach(p=>{p.classList.remove('on');p.style.display='';});
+  const authEl=document.getElementById('page-auth');
+  if(authEl) authEl.style.display='none';
+  const p=document.getElementById('page-'+name);if(!p)return;
+  if(name==='auth'){
+    p.style.display='flex';
+  } else {
+    p.classList.add('on');
+  }
+  setActiveTab(name);
+  window.scrollTo(0,0);
+  if(name==='dashboard')renderDash();
+  if(name==='scenario'){sPhase=0;sTitle='';sCtx='';sOpts=['',''];sResult=null;sCurId=null;renderScen()}
+  if(name==='profile')renderProfile();
+  if(name==='extras')renderExtras();
+  if(name==='community')renderComm();
+  if(name==='welcome'){obStep=0;renderOB()}
+}
+
+// UTILS
+function v(id){const e=document.getElementById(id);return e?e.value.trim():''}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function setText(id,val){const e=document.getElementById(id);if(e)e.textContent=val}
+function fmt(n){if(!n||isNaN(n))return'0';const a=Math.abs(n);if(a>=1000000)return(n/1000000).toFixed(1).replace(/\.0$/,'')+'M';if(a>=1000)return(n/1000).toFixed(1).replace(/\.0$/,'')+'K';return Math.round(n).toLocaleString()}
+function toast(msg,ms=2600){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),ms)}
+
+// BOOT
+initAuth();
+</script></body></html>
